@@ -1,0 +1,40 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+  - name: Criar um grupo de segurança com HTTPS, HTTP e SSH
+    ec2_group:
+      name: sg_profe
+      vpc_id: vpc-7a117c07
+      description: sg com as regras
+      region: us-west-1
+      rules:
+        - proto: tcp
+          ports:
+          - 443
+          - 80
+          - 23
+          - 8080
+          cidr_ip: 0.0.0.0/0
+          rule_desc: Todo tráfego aceito  
+  - name: Criando nosso servidor
+    ec2:
+      region: us-east-1
+      instance_type: t2.micro
+      image: ami-0c2b8ca1dad447f8a
+      instance_tags:
+        Name: Instancia_Profe
+      wait: yes
+      wait_timeout: 500
+      group: grupo_criado
+      volumes:
+        - device_name: /dev/xvda
+          volume_type: gp2
+          volume_size: 8
+      vpc_subnet_id: subnet-82bceedd
+      assign_public_ip: no
+      key_name: minha_chave
+    register: info
+  - name: DNS Publico do nosso servidor
+    debug:
+      msg: "O IP publico é {{ info.instances[0].public_ip }} e seus DNS são {{ info.instances[0].public_dns_name }}"
